@@ -87,6 +87,14 @@ class InstagramNamespaceManager extends SourceNamespaceManager {
 						pic.setSmall(low_reso);
 						pic.setThumb(thumb);
 
+						var picUser = photo.user;
+
+						var user : User = new User(picUser.id);
+						user.setUsername(picUser.username);
+						user.setRealname(picUser.full_name);
+						user.setProfilPicture(picUser.profile_picture);
+						pic.setOwner(user);
+
 						pictureAlbum.addPicture(pic);
 					}
 				}
