@@ -40,28 +40,49 @@ class InstagramNamespaceManager extends SourceNamespaceManager {
 		Logger.debug("TaggedPictures Action with params :");
 		Logger.debug(params);
 
-		var fail = function(error) {
+		var failManageOAuth = function(error) {
+			Logger.error("Error during the request manage OAuth");
 			if(error) {
 				Logger.error(error);
 			}
 		};
 
 		var success = function(oauthActions) {
+
+			var failGet = function(error) {
+				Logger.error("Error during the request get");
+				if(error) {
+					Logger.error(error);
+				}
+			};
+
 			var successSearch = function (information) {
-				console.log("Obtained informations : ");
-				console.log(JSON.stringify(information));
 
 				var pictureAlbum : PictureAlbum = new PictureAlbum();
 				var listPhotos = information.data;
 
+				var limit = parseInt(params.Limit);
+
+				if (listPhotos.length < limit) {
+					limit = listPhotos.length;
+				}
+
+				var infoDuration = parseInt(params.InfoDuration);
+
+				var totalDuration = limit*infoDuration;
+
 				pictureAlbum.setId(uuid.v1());
 				pictureAlbum.setPriority(0);
+				pictureAlbum.setDurationToDisplay(totalDuration);
 
-				for (var i = 0; i < listPhotos.length; i++) {
+				for (var i = 0; i < limit; i++) {
 					var photo = listPhotos[i];
 
 					if (photo.type == "image") {
-						var pic : Picture = new Picture(photo.id, 0, new Date(photo.created_time), null, 10000);
+						var pic : Picture = new Picture(photo.id);
+
+						pic.setCreationDate(new Date(photo.created_time));
+						pic.setDurationToDisplay(infoDuration);
 						//pic.setDescription(photo.description._content);
 						pic.setTitle(photo.caption.text);
 
@@ -107,9 +128,11 @@ class InstagramNamespaceManager extends SourceNamespaceManager {
 
 
 			var userPhoto = 'https://api.instagram.com/v1/tags/'+params.SearchQuery+'/media/recent?count='+params.Limit;
-			oauthActions.get(userPhoto, successSearch, fail);
+
+			Logger.debug("Get with the following URL : "+userPhoto);
+			oauthActions.get(userPhoto, successSearch, failGet);
 		};
 
-		self.manageOAuth('instagram', params.oauthKey, success, fail);
+		self.manageOAuth('instagram', params.oauthKey, success, failManageOAuth);
 	}
 }
